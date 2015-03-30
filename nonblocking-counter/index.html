@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Nonblocking counter</title>
+
+    <!-- Load Babel scripts -->
+    <script src="node_modules/babel/browser-polyfill.js"></script>
+    <script src="node_modules/babel/browser.js"></script>
+</head>
+<body>
+    <h1>Nonblocking counter</h1>
+
+    Counter: <span id="counter"></span>
+    <p>
+    GitHub project: <a href="https://github.com/rauschma/nonblocking-counter">nonblocking-counter</a>
+
+    <script type="text/babel">
+        function* countUp(start = 0) {
+            const counterSpan = document.querySelector('#counter');
+            while (true) {
+                counterSpan.textContent = String(start);
+                start++;
+                yield; // pause
+            }
+        }
+        function run(generatorObject) {
+            if (!generatorObject.next().done) {
+                setTimeout(function () {
+                    run(generatorObject);
+                }, 1000);
+            }
+        }
+        run(countUp());
+    </script>
+</body>
+</html>
