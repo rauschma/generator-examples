@@ -17,15 +17,19 @@
 
     <script type="text/babel">
         function* countUp(start = 0) {
-            const counterSpan = document.querySelector('#counter');
             while (true) {
-                counterSpan.textContent = String(start);
                 start++;
-                yield; // pause
+                yield* displayCounter(start);
             }
+        }
+        function* displayCounter(counter) {
+            const counterSpan = document.querySelector('#counter');
+            counterSpan.textContent = String(counter);
+            yield; // pause
         }
         function run(generatorObject) {
             if (!generatorObject.next().done) {
+                // Add a new task to the event queue
                 setTimeout(function () {
                     run(generatorObject);
                 }, 1000);
