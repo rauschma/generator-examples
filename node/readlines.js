@@ -1,19 +1,4 @@
-
-function chain(...generatorFunctions) {
-    if (generatorFunctions.length < 1) {
-        throw new Error('Need at least 1 argument');
-    }
-    let generatorObject = generatorFunctions[generatorFunctions.length-1]();
-    generatorObject.next();
-    for (let i=generatorFunctions.length-2; i >= 0; i--) {
-        let generatorFunction = generatorFunctions[i];
-        // Link current generator to successor
-        generatorObject = generatorFunction(generatorObject);
-        // Start the generator
-        generatorObject.next();
-    }
-    return generatorObject;
-}
+//------------------- The processing chain
 
 import {createReadStream} from 'fs';
 
@@ -39,7 +24,7 @@ function readFile(fileName, target) {
  * Turns a sequence of text chunks into a sequence of lines
  * (where lines are separated by newlines)
  */
-function* splitLines(target) {
+const splitLines = coroutine(function* (target) {
     let previous = '';
     try {
         while (true) {
@@ -60,12 +45,12 @@ function* splitLines(target) {
         // Signal end of output sequence
         target.return();
     }
-}
+});
 
 /**
  * Prefixes numbers to a sequence of lines
  */
-function* numberLines(target) {
+const numberLines = coroutine(function* (target) {
     try {
         for (let lineNo = 0; ; lineNo++) {
             let line = yield;
@@ -75,19 +60,35 @@ function* numberLines(target) {
         // Signal end of output sequence
         target.return();
     }
-}
+});
 
 /**
  * Receives a sequence of lines (without newlines)
  * and logs them (adding newlines).
  */
-function* printLines() {
+const printLines = coroutine(function* () {
     while (true) {
         let line = yield;
         console.log(line);
     }
+});
+
+//------------------- Helper function
+
+/**
+ * Returns a function that, when called,
+ * returns a generator object that is immediately
+ * ready for input via `next()`
+ */
+function coroutine(generatorFunction) {
+    return function (...args) {
+        let generatorObject = generatorFunction(...args);
+        generatorObject.next();
+        return generatorObject;
+    };
 }
 
-let fileName = process.argv[2];
-readFile(fileName, chain(splitLines, numberLines, printLines));
+//------------------- Main
 
+let fileName = process.argv[2];
+readFile(fileName, splitLines(numberLines(printLines())));
