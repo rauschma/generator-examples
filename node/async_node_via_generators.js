@@ -2,13 +2,11 @@ import {readFile} from 'fs';
 
 let fileNames = process.argv.slice(2);
 
-console.log(fileNames, readFile);
-
 run(function* () {
     let next = yield;
     for (let f of fileNames) {
         let contents = yield readFile(f, { encoding: 'utf8' }, next);
-        console.log('-------------', f);
+        console.log('##### '+f);
         console.log(contents);
     }
 });
@@ -20,18 +18,14 @@ function run(generatorFunction) {
     generatorObject.next();
 
     // Step 2: Pass in a function that the generator can use as a callback
-    let nextFunction = createNextFunction(generatorObject);
-    generatorObject.next(nextFunction);
-
-    // Subsequent invocations of `next()` are triggered by `nextFunction`
-}
-
-function createNextFunction(generatorObject) {
-    return function(error, result) {
+    function nextFunction(error, result) {
         if (error) {
             generatorObject.throw(error);
         } else {
             generatorObject.next(result);
         }
-    };
+    }
+    generatorObject.next(nextFunction);
+
+    // Subsequent invocations of `next()` are triggered by `nextFunction`
 }
