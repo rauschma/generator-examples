@@ -1,6 +1,6 @@
 //------------------- The processing chain
 
-import {createReadStream} from 'fs';
+const { createReadStream } = require('fs');
 
 /**
  * Create an asynchronous ReadStream for the file whose name
@@ -9,9 +9,8 @@ import {createReadStream} from 'fs';
  * @see ReadStream https://nodejs.org/api/fs.html#fs_class_fs_readstream
  */
 function readFile(fileName, target) {
-    let readStream = createReadStream(fileName, { encoding: 'utf8', bufferSize: 1024 });
-    readStream.on('data', buffer => {
-        let str = buffer.toString('utf8');
+    const readStream = createReadStream(fileName, { encoding: 'utf8' });
+    readStream.on('data', str => {
         target.next(str);
     });
     readStream.on('end', () => {
@@ -31,9 +30,9 @@ const splitLines = coroutine(function* (target) {
             previous += yield;
             let eolIndex;
             while ((eolIndex = previous.indexOf('\n')) >= 0) {
-                let line = previous.slice(0, eolIndex);
+                const line = previous.slice(0, eolIndex);
                 target.next(line);
-                previous = previous.slice(eolIndex+1);
+                previous = previous.slice(eolIndex + 1);
             }
         }
     } finally {
@@ -52,8 +51,8 @@ const splitLines = coroutine(function* (target) {
  */
 const numberLines = coroutine(function* (target) {
     try {
-        for (let lineNo = 0; ; lineNo++) {
-            let line = yield;
+        for (let lineNo = 1; ; lineNo++) {
+            const line = yield;
             target.next(`${lineNo}: ${line}`);
         }
     } finally {
@@ -68,7 +67,7 @@ const numberLines = coroutine(function* (target) {
  */
 const printLines = coroutine(function* () {
     while (true) {
-        let line = yield;
+        const line = yield;
         console.log(line);
     }
 });
@@ -82,7 +81,7 @@ const printLines = coroutine(function* () {
  */
 function coroutine(generatorFunction) {
     return function (...args) {
-        let generatorObject = generatorFunction(...args);
+        const generatorObject = generatorFunction(...args);
         generatorObject.next();
         return generatorObject;
     };
@@ -90,5 +89,5 @@ function coroutine(generatorFunction) {
 
 //------------------- Main
 
-let fileName = process.argv[2];
+const fileName = process.argv[2];
 readFile(fileName, splitLines(numberLines(printLines())));
